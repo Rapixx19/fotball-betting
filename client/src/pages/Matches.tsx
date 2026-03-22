@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, Filter } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from "wouter";
+import { Calendar, Filter, BarChart3 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { formatDate, formatOdds, toAmericanOdds } from "@/lib/utils";
+import { BetBuilder } from "@/components/betting/BetBuilder";
+import { formatDate, formatOdds, cn } from "@/lib/utils";
 import { useParlay } from "@/contexts/ParlayContext";
 
 interface Match {
@@ -23,7 +25,7 @@ interface Match {
 
 export function Matches() {
   const [sportFilter, setSportFilter] = useState<string>("all");
-  const { legs, toggleLeg, clearLegs, isSelected, combinedOdds, legCount } = useParlay();
+  const { toggleLeg, isSelected } = useParlay();
 
   const { data, isLoading } = useQuery<{ matches: Match[] }>({
     queryKey: ["/api/matches"],
@@ -76,123 +78,118 @@ export function Matches() {
         </div>
       </div>
 
-      {/* Selected Legs Summary */}
-      {legCount > 0 && (
-        <Card className="border-primary">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Your Parlay ({legCount} legs)</CardTitle>
-            <CardDescription>
-              Combined Odds: <span className="font-bold text-foreground">{formatOdds(combinedOdds)}</span>
-              {" "}({toAmericanOdds(combinedOdds)})
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex flex-wrap gap-2">
-              {legs.map((leg) => (
-                <Badge key={`${leg.matchId}-${leg.pick}`} variant="secondary">
-                  {leg.matchInfo?.homeTeam} vs {leg.matchInfo?.awayTeam}: {leg.pick}
-                </Badge>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Matches List */}
+        <div className="lg:col-span-2 space-y-4">
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : filteredMatches.length > 0 ? (
+            <div className="grid gap-3">
+              {filteredMatches.map((match) => (
+                <Card key={match.id} className="bg-card/80 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <Link href={`/match/${match.id}`}>
+                        <div className="flex-1 cursor-pointer group">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge variant="outline" className="text-xs">{match.sport}</Badge>
+                            {match.league && (
+                              <span className="text-xs text-muted-foreground">{match.league}</span>
+                            )}
+                          </div>
+                          <h3 className="font-semibold group-hover:text-primary transition-colors">
+                            {match.homeTeam} vs {match.awayTeam}
+                          </h3>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                            <Calendar className="h-3 w-3" />
+                            {formatDate(match.startsAt)}
+                          </div>
+                        </div>
+                      </Link>
+
+                      <div className="flex items-center gap-2">
+                        {match.homeOdds && (
+                          <Button
+                            variant={isSelected(match.id, "home") ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handleToggleLeg(match, "home", parseFloat(match.homeOdds!))}
+                            className={cn(
+                              "min-w-20 h-14 flex flex-col",
+                              isSelected(match.id, "home")
+                                ? "bg-neon-cyan text-black"
+                                : "hover:border-neon-cyan/50 hover:bg-neon-cyan/10"
+                            )}
+                          >
+                            <span className="text-xs opacity-70">Home</span>
+                            <span className="font-bold">{formatOdds(match.homeOdds)}</span>
+                          </Button>
+                        )}
+
+                        {match.drawOdds && (
+                          <Button
+                            variant={isSelected(match.id, "draw") ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handleToggleLeg(match, "draw", parseFloat(match.drawOdds!))}
+                            className={cn(
+                              "min-w-20 h-14 flex flex-col",
+                              isSelected(match.id, "draw")
+                                ? "bg-muted-foreground text-background"
+                                : "hover:border-muted-foreground/50 hover:bg-muted/30"
+                            )}
+                          >
+                            <span className="text-xs opacity-70">Draw</span>
+                            <span className="font-bold">{formatOdds(match.drawOdds)}</span>
+                          </Button>
+                        )}
+
+                        {match.awayOdds && (
+                          <Button
+                            variant={isSelected(match.id, "away") ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handleToggleLeg(match, "away", parseFloat(match.awayOdds!))}
+                            className={cn(
+                              "min-w-20 h-14 flex flex-col",
+                              isSelected(match.id, "away")
+                                ? "bg-neon-magenta text-black"
+                                : "hover:border-neon-magenta/50 hover:bg-neon-magenta/10"
+                            )}
+                          >
+                            <span className="text-xs opacity-70">Away</span>
+                            <span className="font-bold">{formatOdds(match.awayOdds)}</span>
+                          </Button>
+                        )}
+
+                        <Link href={`/match/${match.id}`}>
+                          <Button variant="ghost" size="icon" className="h-14 w-10">
+                            <BarChart3 className="w-4 h-4" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={() => {
-                  window.location.hash = "#/analysis";
-                }}
-              >
-                Analyze Parlay
-              </Button>
-              <Button variant="outline" onClick={clearLegs}>
-                Clear All
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {isLoading ? (
-        <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      ) : filteredMatches.length > 0 ? (
-        <div className="grid gap-4">
-          {filteredMatches.map((match) => (
-            <Card key={match.id}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge variant="outline">{match.sport}</Badge>
-                      {match.league && (
-                        <span className="text-sm text-muted-foreground">{match.league}</span>
-                      )}
-                    </div>
-                    <h3 className="text-lg font-semibold">
-                      {match.homeTeam} vs {match.awayTeam}
-                    </h3>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                      <Calendar className="h-4 w-4" />
-                      {formatDate(match.startsAt)}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    {match.homeOdds && (
-                      <Button
-                        variant={isSelected(match.id, "home") ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleToggleLeg(match, "home", parseFloat(match.homeOdds!))}
-                        className="min-w-24"
-                      >
-                        <div className="text-center">
-                          <div className="text-xs opacity-70">Home</div>
-                          <div className="font-bold">{formatOdds(match.homeOdds)}</div>
-                        </div>
-                      </Button>
-                    )}
-
-                    {match.drawOdds && (
-                      <Button
-                        variant={isSelected(match.id, "draw") ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleToggleLeg(match, "draw", parseFloat(match.drawOdds!))}
-                        className="min-w-24"
-                      >
-                        <div className="text-center">
-                          <div className="text-xs opacity-70">Draw</div>
-                          <div className="font-bold">{formatOdds(match.drawOdds)}</div>
-                        </div>
-                      </Button>
-                    )}
-
-                    {match.awayOdds && (
-                      <Button
-                        variant={isSelected(match.id, "away") ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleToggleLeg(match, "away", parseFloat(match.awayOdds!))}
-                        className="min-w-24"
-                      >
-                        <div className="text-center">
-                          <div className="text-xs opacity-70">Away</div>
-                          <div className="font-bold">{formatOdds(match.awayOdds)}</div>
-                        </div>
-                      </Button>
-                    )}
-                  </div>
-                </div>
+          ) : (
+            <Card className="bg-card/80 backdrop-blur-sm">
+              <CardContent className="py-12">
+                <p className="text-center text-muted-foreground">
+                  No matches available. Check back later for upcoming events.
+                </p>
               </CardContent>
             </Card>
-          ))}
+          )}
         </div>
-      ) : (
-        <Card>
-          <CardContent className="py-12">
-            <p className="text-center text-muted-foreground">
-              No matches available. Check back later for upcoming events.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+
+        {/* Bet Builder Sidebar */}
+        <div className="lg:col-span-1">
+          <div className="sticky top-4">
+            <BetBuilder />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

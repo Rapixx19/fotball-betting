@@ -4,8 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Layout } from "./components/layout/Layout";
 import { Dashboard } from "./pages/Dashboard";
 import { Matches } from "./pages/Matches";
+import { MatchDetail } from "./pages/MatchDetail";
 import { Slips } from "./pages/Slips";
 import { Analysis } from "./pages/Analysis";
+import { ValueBets } from "./pages/ValueBets";
+import { Backtesting } from "./pages/Backtesting";
 import { Chat } from "./pages/Chat";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
@@ -46,8 +49,11 @@ function App() {
                 <Switch>
                   <Route path="/" component={Dashboard} />
                   <Route path="/matches" component={Matches} />
+                  <Route path="/match/:id" component={MatchDetail} />
                   <Route path="/slips" component={Slips} />
                   <Route path="/analysis" component={Analysis} />
+                  <Route path="/value" component={ValueBets} />
+                  <Route path="/backtesting" component={Backtesting} />
                   <Route path="/chat" component={Chat} />
                   <Route>
                     <div className="p-8 text-center">

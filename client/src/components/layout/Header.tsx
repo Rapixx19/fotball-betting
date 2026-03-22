@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { LogOut, TrendingUp } from "lucide-react";
+import { LogOut, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -18,11 +18,16 @@ export function Header({ user }: HeaderProps) {
   });
 
   return (
-    <header className="border-b bg-card">
+    <header className="border-b border-border/50 bg-card/80 backdrop-blur-sm">
       <div className="flex h-16 items-center justify-between px-6">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="h-6 w-6 text-primary" />
-          <span className="text-xl font-bold">ParlayEdge</span>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Zap className="h-7 w-7 text-neon-cyan" />
+            <div className="absolute inset-0 h-7 w-7 bg-neon-cyan/30 blur-md" />
+          </div>
+          <span className="text-xl font-bold tracking-tight">
+            Parlay<span className="text-neon-cyan">Edge</span>
+          </span>
         </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-muted-foreground">
@@ -33,6 +38,7 @@ export function Header({ user }: HeaderProps) {
             size="sm"
             onClick={() => logoutMutation.mutate()}
             disabled={logoutMutation.isPending}
+            className="hover:bg-destructive/10 hover:text-destructive"
           >
             <LogOut className="h-4 w-4 mr-2" />
             Logout
